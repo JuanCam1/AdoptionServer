@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Status {
+  id_status Int    @id @default(autoincrement())
+  status    String
+  users     User[] @relation("StatusUser")
+  posts     Post[] @relation("StatusPost")
+}
+
+model Pet {
+  id          String        @id @default(uuid())
+  name        String
+  age         Int
+  species     String
+  breed       String?
+  description String?
+  adopted     Boolean       @default(false)
+  ownerId     String
+  owner       User          @relation(fields: [ownerId], references: [id])
+  datePet     String
+  hoursPet    String
+  favorites   FavoritePet[]
+}
+
+model Post {
+  id        String         @id @default(uuid())
+  title     String
+  content   String
+  imageUrl  String?
+  authorId  String
+  author    User           @relation(fields: [authorId], references: [id])
+  comments  Comment[]
+  datePost  String
+  hoursPost String
+  favorites FavoritePost[]
+  status    Status?        @relation("StatusPost", fields: [id_status], references: [id_status])
+  id_status Int?           @default(1)
+}
+
+model Comment {
+  id           String @id @default(uuid())
+  content      String
+  authorId     String
+  author       User   @relation(fields: [authorId], references: [id])
+  postId       String
+  post         Post   @relation(fields: [postId], references: [id])
+  dateComment  String
+  hoursComment String
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  content    String
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  createdAt  DateTime @default(now())
+  read       Boolean  @default(false)
+}
+
+model FavoritePet {
+  id            String @id @default(uuid())
+  userId        String
+  user          User   @relation(fields: [userId], references: [id])
+  petId         String
+  pet           Pet    @relation(fields: [petId], references: [id])
+  dateFavorite  String
+  hoursFavorite String
+}
+
+model FavoritePost {
+  id            String @id @default(uuid())
+  userId        String
+  user          User   @relation(fields: [userId], references: [id])
+  postId        String
+  post          Post   @relation(fields: [postId], references: [id])
+  dateFavorite  String
+  hoursFavorite String
+}
+
+model User {
+  id               String         @id @default(uuid())
+  name             String
+  email            String         @unique
+  password         String
+  avatarUrl        String?
+  bio              String?
+  telephone        String?
+  posts            Post[]
+  comments         Comment[]
+  sentMessages     Message[]      @relation("SentMessages")
+  receivedMessages Message[]      @relation("ReceivedMessages")
+  pets             Pet[]
+  favoritePets     FavoritePet[]
+  favoritePosts    FavoritePost[]
+  sessions         Session[]
+  status           Status?        @relation("StatusUser", fields: [id_status], references: [id_status])
+  id_status        Int?           @default(1)
+}
+
+model Session {
+  id              String   @id @default(cuid())
+  sessionToken    String   @unique
+  userId          String
+  dateSession     String
+  hoursSession    String
+  dateEndSession  String
+  hoursEndSession String
+  expires         DateTime
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+}
+
+model PasswordResetToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+}
